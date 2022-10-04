@@ -1,3 +1,34 @@
+window.addEventListener("DOMContentLoaded",(event)=>{
+    const name = document.querySelector('#name');
+    const textError = document.querySelector(".text-error");         
+    name.addEventListener('input',function(){
+    let nameRegex = RegExp("^[A-Z]{1}[a-z]{2,}$");
+        if(nameRegex.test(name.value)||name.value.length==0)
+            textError.textContent="";
+        else 
+            textError.textContent="Name is invalid";
+        });
+
+    let day = document.getElementById("day");
+    let month = document.getElementById("month");
+    let year = document.getElementById("year");
+    let dateError = document.querySelector(".date-error");    
+    day.addEventListener('click',checkDate);
+    month.addEventListener('click',checkDate);
+    year.addEventListener('click',checkDate);
+    function checkDate(){
+        let dateString = year.value+"-"+month.value+"-"+day.value+"T00:00:00Z";
+        date = new Date(dateString);
+        console.log(date);
+        if(date.getTime()<=(new Date()).getTime()
+        &&((((new Date()).getTime())-(date.getTime()))/(1000*60*60*24))<=30 ){
+            dateError.textContent = "";
+        }
+        else 
+            dateError.textContent="Date is invalid";
+    }
+});
+
 function updateSalary(){
     const salary = document.querySelector('#salary');
     const output = document.querySelector(".salary-output");
@@ -6,7 +37,7 @@ function updateSalary(){
         output.textContent = salary.value;
     });
 }
-
+//Employee Payroll Class
 class EmployeePayrollData{
     //constructor
     constructor(...params){
@@ -60,6 +91,12 @@ class EmployeePayrollData{
     get startDate(){
         return this._startDate;
     }
+    get notes(){
+        return this._notes;
+    }
+    set notes(notes){
+        this._notes = notes;
+    }
     set startDate(startDate){
         if(startDate.getTime()<=(new Date()).getTime()
         &&((((new Date()).getTime())-(startDate.getTime()))/(1000*60*60*24))<=30 ){
@@ -76,7 +113,7 @@ class EmployeePayrollData{
         const options = {year: 'numeric', month: 'numeric', day:'numeric'};
         const empDate = this.startDate == undefined ? "undefined":
                         this.startDate.toLocaleDateString("en-IN",options);
-        return "Name = "+this.name +",gender = "+this.gender+",departments = "+this.department+",salary = "+this.salary+",start date = "+empDate;
+        return "Name = "+this.name +", Gender = "+this.gender+", Departments = "+this.department+", Salary = "+this.salary+", Start date = "+empDate;
     }
 }
 
@@ -114,13 +151,57 @@ function save(){
     const day = document.getElementById("day").value;
     const month = document.getElementById("month").value;
     const year = document.getElementById("year").value;
-    let dateString = year+"-"+month+"-"+day+"T23:59:00Z";
+    let dateString = year+"-"+month+"-"+day+"T00:00:00Z";
     date = new Date(dateString);
 
     //notes
     const notes = document.getElementById("notes").value;
-
-    let employeePayrollData = new EmployeePayrollData(name,profileImage,gender,departments,salary,date,notes);
+    try{
+        employeePayrollData = new EmployeePayrollData(name,profileImage,gender,departments,salary,date,notes);
+    }
+    catch(e){
+        alert("Please enter proper details");
+        console.error(e);
+    }
+    alert(employeePayrollData.toString());
     console.log(employeePayrollData.toString());
     console.log(employeePayrollData.department);
+
+    if(employeePayrollData.name!=undefined&&employeePayrollData.startDate!=undefined)
+        createAndUpdateStorage(employeePayrollData);
+        
+    employeePayrollData = undefined;
+}
+
+function createAndUpdateStorage(employeePayrollData){
+    let employeePayrollList = JSON.parse(localStorage.getItem("EmployeePayrollList"));
+
+    if(employeePayrollList!=undefined){
+        employeePayrollList.push(employeePayrollData);
+    }
+    else{
+        employeePayrollList = [employeePayrollData];
+    }
+    alert(employeePayrollList.toString());
+    localStorage.setItem("EmployeePayrollList",JSON.stringify(employeePayrollList));
+}
+
+const resetForm = () => {
+    document.querySelector("#name").value = "";
+    unsetSelectedValues("[name=profile]");
+    unsetSelectedValues("[name=gender]");
+    unsetSelectedValues("[name=department]");
+    document.querySelector(".salary-output").textContent=400000;
+    document.querySelector("#day").value = 01;
+    document.querySelector("#month").value = 01;
+    document.querySelector("#year").value = 2020;
+    document.querySelector("#notes").value= "";
+    document.querySelector(".date-error").textContent = "";
+}
+
+const unsetSelectedValues = (propertyValue) => {
+    let allItems = document.querySelectorAll(propertyValue);
+    allItems.forEach(item=>{
+        item.checked = false;
+    });
 }
